@@ -20,7 +20,51 @@ $("#fab").onclick=()=>S.v==="books"?addBook():S.v==="volumes"?addVolume():chapte
 $("#theme").onclick=()=>{document.body.classList.toggle("dark");localStorage.dark=document.body.classList.contains("dark")?"1":"0"};if(localStorage.dark==="1")document.body.classList.add("dark");
 function font(d){let n=Math.max(14,Math.min(30,Number(localStorage.font||18)+d));localStorage.font=n;if($("#read"))$("#read").style.fontSize=n+"px"}$("#minus").onclick=()=>font(-1);$("#plus").onclick=()=>font(1);
 async function adj(d){let c=await get("chapters",S.chapter),a=(await ix("chapters","volume",c.volume)).sort((x,y)=>x.created-y.created),i=a.findIndex(x=>x.id===c.id);if(a[i+d])openChapter(a[i+d].id)}$("#prev").onclick=()=>adj(-1);$("#next").onclick=()=>adj(1);
-$("#txt").onchange=async e=>{let f=e.target.files[0];if(f){chapterForm(null,await f.text());$("#ct").value=f.name.replace(/\.txt$/i,"");e.target.value=""}}
+$("#txt").onchange = async e => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    files.sort((a, b) =>
+        a.name.localeCompare(b.name, "ja", { numeric: true })
+    );
+
+    if (files.length === 1) {
+        const f = files[0];
+        chapterForm(null, await f.text());
+        $("#ct").value = f.name.replace(/\.txt$/i, "");
+        e.target.value = "";
+        return;
+    }
+
+    if (!confirm(`${files.length}章をまとめて追加しますか？`)) {
+        e.target.value = "";
+        return;
+    }
+
+    let count = 0;
+
+    for (const f of files) {
+        const text = await f.text();
+        if (!text.trim()) continue;
+
+        await put("chapters", {
+            id: uid(),
+            volume: S.volume,
+            title: f.name.replace(/\.txt$/i, ""),
+            text: text,
+            created: Date.now() + count,
+            scroll: 0,
+            progress: 0
+        });
+
+        count++;
+    }
+
+    e.target.value = "";
+    alert(`${count}章を追加しました！`);
+    S.v = "chapters";
+    render();
+};
 async function backup(){let d={books:await all("books"),volumes:await all("volumes"),chapters:await all("chapters")},b=new Blob([JSON.stringify(d)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="novel-reader-backup.json";a.click()}
 $("#restore").onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());if(!confirm("バックアップを追加しますか？"))return;for(let x of d.books)await put("books",x);for(let x of d.volumes)await put("volumes",x);for(let x of d.chapters)await put("chapters",x);render()}catch{alert("読み込めませんでした")}e.target.value=""}
 openDB().then(render)

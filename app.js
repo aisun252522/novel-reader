@@ -1,7 +1,18 @@
 const DB="NovelReader";let db,S={v:"books"};const $=q=>document.querySelector(q),app=$("#app");const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+""+Math.random();const rq=r=>new Promise((a,b)=>{r.onsuccess=()=>a(r.result);r.onerror=()=>b(r.error)});const st=(n,m="readonly")=>db.transaction(n,m).objectStore(n);const all=n=>rq(st(n).getAll());const get=(n,k)=>rq(st(n).get(k));const put=(n,x)=>rq(st(n,"readwrite").put(x));const del=(n,k)=>rq(st(n,"readwrite").delete(k));const ix=(n,i,k)=>rq(st(n).index(i).getAll(k));const esc=s=>(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function openDB(){return new Promise((a,b)=>{let r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{let d=r.result;if(!d.objectStoreNames.contains("books"))d.createObjectStore("books",{keyPath:"id"});if(!d.objectStoreNames.contains("volumes")){let x=d.createObjectStore("volumes",{keyPath:"id"});x.createIndex("book","book")}if(!d.objectStoreNames.contains("chapters")){let x=d.createObjectStore("chapters",{keyPath:"id"});x.createIndex("volume","volume")}};r.onsuccess=()=>{db=r.result;a()};r.onerror=()=>b(r.error)})}
 function head(t,s=""){ $("#title").textContent=t;$("#sub").textContent=s;$("#back").classList.toggle("hide",S.v==="books");$("#fab").classList.toggle("hide",["reader","form"].includes(S.v));$("#readerNav").classList.toggle("hide",S.v!=="reader")}
-async function render(){if(S.v==="books")return books();if(S.v==="volumes")return volumes();if(S.v==="chapters")return chapters();if(S.v==="reader")return reader()}
+async function render() {
+    // 読書画面のときだけ横スライドモードにする
+    document.body.classList.toggle(
+        "horizontal-reader",
+        S.v === "reader"
+    );
+
+    if (S.v === "books") return books();
+    if (S.v === "volumes") return volumes();
+    if (S.v === "chapters") return chapters();
+    if (S.v === "reader") return reader();
+}
 async function books(){head("📚 本棚","端末内に保存");let a=await all("books");app.innerHTML=a.map(x=>`<div class=card onclick="openBook('${x.id}')"><h2>📖 ${esc(x.title)}</h2></div>`).join("")||"<div class=card>右下の＋から本を追加できます。</div>";app.innerHTML+=`<div class=card><div class=row><button class=secondary onclick=backup()>📤 バックアップ</button><button class=secondary onclick="$('#restore').click()">📥 復元</button></div></div>`}
 window.openBook=i=>{S={v:"volumes",book:i};render()}
 async function volumes(){let b=await get("books",S.book),a=await ix("volumes","book",S.book);head("📚 "+b.title,"巻を選択");app.innerHTML=a.map(x=>`<div class=card onclick="openVolume('${x.id}')"><h2>📕 ${esc(x.title)}</h2></div>`).join("")||"<div class=card>まだ巻がありません。</div>";app.innerHTML+=`<div class=card><div class=row><button onclick=addVolume()>＋ 巻追加</button><button class=danger onclick=deleteBook()>本を削除</button></div></div>`}

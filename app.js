@@ -18,7 +18,18 @@ window.openBook=i=>{S={v:"volumes",book:i};render()}
 async function volumes(){let b=await get("books",S.book),a=await ix("volumes","book",S.book);head("📚 "+b.title,"巻を選択");app.innerHTML=a.map(x=>`<div class=card onclick="openVolume('${x.id}')"><h2>📕 ${esc(x.title)}</h2></div>`).join("")||"<div class=card>まだ巻がありません。</div>";app.innerHTML+=`<div class=card><div class=row><button onclick=addVolume()>＋ 巻追加</button><button class=danger onclick=deleteBook()>本を削除</button></div></div>`}
 window.openVolume=i=>{S.v="chapters";S.volume=i;render()}
 async function chapters(){let v=await get("volumes",S.volume),a=(await ix("chapters","volume",S.volume)).sort((x,y)=>x.created-y.created);head("📕 "+v.title,"章を選択");app.innerHTML=a.map(x=>`<div class=card><div onclick="openChapter('${x.id}')"><h3>📄 ${esc(x.title)}</h3><span class=muted>${x.text.length.toLocaleString()}文字</span></div><div class=row style="margin-top:10px"><button class=secondary onclick="editChapter('${x.id}')">✏️ 編集</button><button class=danger onclick="deleteChapter('${x.id}')">🗑️ 削除</button></div></div>`).join("")||"<div class=card>まだ章がありません。</div>";app.innerHTML+=`<div class=card><div class=row><button onclick=chapterForm()>＋ 章追加</button><button class=secondary onclick="$('#txt').click()">TXT読込</button></div><br><button class=danger onclick=deleteVolume()>この巻を削除</button></div>`}
-window.openChapter = async i => {
+async function render() {
+    // 読書画面のときだけ横スライドモードにする
+    document.body.classList.toggle(
+        "horizontal-reader",
+        S.v === "reader"
+    );
+
+    if (S.v === "books") return books();
+    if (S.v === "volumes") return volumes();
+    if (S.v === "chapters") return chapters();
+    if (S.v === "reader") return reader();
+}
     S.v = "reader";
     S.chapter = i;
 

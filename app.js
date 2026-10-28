@@ -22,6 +22,31 @@ window.openChapter = async i => {
     });
 };
 async function reader(){let c=await get("chapters",S.chapter),v=await get("volumes",c.volume);head("📖 "+c.title,v.title);app.innerHTML=`<article id=read class=reader>${esc(c.text)}</article>`;$("#read").style.fontSize=(localStorage.font||18)+"px"}
+// 読書画面を左右タップでページ送り
+app.addEventListener("click", e => {
+    if (S.v !== "reader") return;
+
+    // 文字選択中やリンク操作中は反応させない
+    if (window.getSelection()?.toString()) return;
+    if (e.target.closest("a, button, input")) return;
+
+    const x = e.clientX;
+    const width = window.innerWidth;
+
+    if (x > width * 0.65) {
+        // 右側タップ：次のページ
+        window.scrollBy({
+            top: window.innerHeight * 0.85,
+            behavior: "smooth"
+        });
+    } else if (x < width * 0.35) {
+        // 左側タップ：前のページ
+        window.scrollBy({
+            top: -window.innerHeight * 0.85,
+            behavior: "smooth"
+        });
+    }
+});
 let timer;addEventListener("scroll",()=>{if(S.v!=="reader")return;clearTimeout(timer);timer=setTimeout(async()=>{let c=await get("chapters",S.chapter);c.scroll=scrollY;await put("chapters",c)},200)})
 async function addBook(){let t=prompt("本のタイトル");if(t?.trim()){await put("books",{id:uid(),title:t.trim()});render()}}
 async function addVolume(){let t=prompt("巻のタイトル");if(t?.trim()){await put("volumes",{id:uid(),book:S.book,title:t.trim()});render()}}

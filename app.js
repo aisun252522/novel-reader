@@ -29,7 +29,30 @@ function chapterForm(x=null,text=""){S.v="form";head(x?"✏️ 章を編集":"�
 window.editChapter=async i=>chapterForm(await get("chapters",i));window.deleteChapter=async i=>{if(confirm("削除しますか？")){await del("chapters",i);render()}}
 async function deleteVolume(){if(!confirm("巻と中の章を削除しますか？"))return;for(let c of await ix("chapters","volume",S.volume))await del("chapters",c.id);await del("volumes",S.volume);S.v="volumes";delete S.volume;render()}
 async function deleteBook(){if(!confirm("本・巻・章をすべて削除しますか？"))return;for(let v of await ix("volumes","book",S.book)){for(let c of await ix("chapters","volume",v.id))await del("chapters",c.id);await del("volumes",v.id)}await del("books",S.book);S={v:"books"};render()}
-$("#fab").onclick=()=>S.v==="books"?addBook():S.v==="volumes"?addVolume():chapterForm();$("#back").onclick=()=>{if(S.v==="volumes")S={v:"books"};else if(S.v==="chapters"){S.v="volumes";delete S.volume}else{S.v="chapters";delete S.chapter}render()}
+$("#fab").onclick=()=>S.v==="books"?addBook():S.v==="volumes"?addVolume():chapterForm();$("#back").onclick = async () => {
+    if (S.v === "reader") {
+        clearTimeout(timer);
+
+        const c = await get("chapters", S.chapter);
+
+        if (c) {
+            c.scroll = window.scrollY;
+            await put("chapters", c);
+        }
+    }
+
+    if (S.v === "volumes") {
+        S = { v: "books" };
+    } else if (S.v === "chapters") {
+        S.v = "volumes";
+        delete S.volume;
+    } else {
+        S.v = "chapters";
+        delete S.chapter;
+    }
+
+    render();
+};elete S.chapter}render()}
 $("#theme").onclick=()=>{document.body.classList.toggle("dark");localStorage.dark=document.body.classList.contains("dark")?"1":"0"};if(localStorage.dark==="1")document.body.classList.add("dark");
 function font(d){let n=Math.max(14,Math.min(30,Number(localStorage.font||18)+d));localStorage.font=n;if($("#read"))$("#read").style.fontSize=n+"px"}$("#minus").onclick=()=>font(-1);$("#plus").onclick=()=>font(1);
 async function adj(d){let c=await get("chapters",S.chapter),a=(await ix("chapters","volume",c.volume)).sort((x,y)=>x.created-y.created),i=a.findIndex(x=>x.id===c.id);if(a[i+d])openChapter(a[i+d].id)}$("#prev").onclick=()=>adj(-1);$("#next").onclick=()=>adj(1);

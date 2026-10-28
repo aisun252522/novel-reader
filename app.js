@@ -58,7 +58,24 @@ app.addEventListener("click", e => {
         });
     }
 });
-let timer;addEventListener("scroll",()=>{if(S.v!=="reader")return;clearTimeout(timer);timer=setTimeout(async()=>{let c=await get("chapters",S.chapter);c.scroll=scrollY;await put("chapters",c)},200)})
+let timer;
+
+// 横スライドの読書位置を保存
+app.addEventListener("scroll", () => {
+    if (S.v !== "reader") return;
+
+    clearTimeout(timer);
+
+    timer = setTimeout(async () => {
+        const c = await get("chapters", S.chapter);
+        const read = $("#read");
+
+        if (!c || !read) return;
+
+        c.scrollX = read.scrollLeft;
+        await put("chapters", c);
+    }, 200);
+}, { passive: true, capture: true });()=>{if(S.v!=="reader")return;clearTimeout(timer);timer=setTimeout(async()=>{let c=await get("chapters",S.chapter);c.scroll=scrollY;await put("chapters",c)},200)})
 async function addBook(){let t=prompt("本のタイトル");if(t?.trim()){await put("books",{id:uid(),title:t.trim()});render()}}
 async function addVolume(){let t=prompt("巻のタイトル");if(t?.trim()){await put("volumes",{id:uid(),book:S.book,title:t.trim()});render()}}
 function chapterForm(x=null,text=""){S.v="form";head(x?"✏️ 章を編集":"＋ 章追加","本文を貼り付け");app.innerHTML=`<div class=card><input id=ct placeholder="章タイトル" value="${x?esc(x.title):""}"><textarea id=body placeholder="日本語本文">${esc(x?x.text:text)}</textarea><button id=save>保存</button></div>`;$("#save").onclick=async()=>{let t=$("#ct").value.trim(),b=$("#body").value;if(!t||!b.trim())return alert("タイトルと本文を入力してください");await put("chapters",x?{...x,title:t,text:b}:{id:uid(),volume:S.volume,title:t,text:b,created:Date.now(),scroll:0});S.v="chapters";render()}}

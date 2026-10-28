@@ -52,7 +52,7 @@ $("#fab").onclick=()=>S.v==="books"?addBook():S.v==="volumes"?addVolume():chapte
     }
 
     render();
-};elete S.chapter}render()}
+};
 $("#theme").onclick=()=>{document.body.classList.toggle("dark");localStorage.dark=document.body.classList.contains("dark")?"1":"0"};if(localStorage.dark==="1")document.body.classList.add("dark");
 function font(d){let n=Math.max(14,Math.min(30,Number(localStorage.font||18)+d));localStorage.font=n;if($("#read"))$("#read").style.fontSize=n+"px"}$("#minus").onclick=()=>font(-1);$("#plus").onclick=()=>font(1);
 async function adj(d){let c=await get("chapters",S.chapter),a=(await ix("chapters","volume",c.volume)).sort((x,y)=>x.created-y.created),i=a.findIndex(x=>x.id===c.id);if(a[i+d])openChapter(a[i+d].id)}$("#prev").onclick=()=>adj(-1);$("#next").onclick=()=>adj(1);
